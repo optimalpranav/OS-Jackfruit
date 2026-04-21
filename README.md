@@ -2,9 +2,10 @@
 
 ## 1. Team Information
 
-| Name       | SRN        |
-|Rahul Bellary | PES1UG24CS357 |
-| Pranav S S | PES1UG24CS336 |
+| Name          | SRN           |
+| ------------- | ------------- |
+| Rahul Bellary | PES1UG24CS357 |
+| Pranav S S    | PES1UG24CS336 |
 
 ---
 
@@ -78,47 +79,64 @@ sudo ./my_engine run c2 rootfs-alpha /bin/ls
 
 ### 4.1 Isolation Mechanisms
 
-The container runtime uses Linux namespaces for isolation:
+This container runtime achieves isolation using Linux namespaces and chroot.
 
-* **CLONE_NEWPID** → Provides process isolation (container sees its own processes)
-* **CLONE_NEWUTS** → Allows setting a separate hostname for container
-* **CLONE_NEWNS** → Provides mount namespace isolation
+* **CLONE_NEWPID (PID Namespace)**
+  Provides process isolation. Inside the container, the first process runs as PID 1 and cannot see host processes.
 
-Additionally, `chroot()` is used to restrict the filesystem view of the container.
+* **CLONE_NEWUTS (UTS Namespace)**
+  Allows the container to have its own hostname using `sethostname()`, ensuring identity isolation.
+
+* **CLONE_NEWNS (Mount Namespace)**
+  Provides an isolated view of mount points. The `/proc` filesystem is mounted separately inside the container.
+
+* **chroot()**
+  Restricts the container’s filesystem to the specified root directory (`rootfs-alpha`), preventing access to host files.
 
 ---
 
-### 4.2 Execution Flow
+### 4.2 Container Execution Flow
 
-clone() → sethostname() → chroot() → mount /proc → execvp()
+The execution flow of the container is:
+
+1. The parent process calls `clone()` with namespace flags
+2. A new child process is created with isolated namespaces
+3. The child sets hostname using `sethostname()`
+4. Filesystem root is changed using `chroot()`
+5. `/proc` filesystem is mounted inside the container
+6. The command is executed using `execvp()`
 
 ---
 
 ### 4.3 Observations
 
-* Only container processes are visible using `ps`
-* Hostname changes to `container`
-* Filesystem is isolated from host
-* Commands run independently inside container
+* `ps` shows only container processes → confirms PID isolation
+* `hostname` outputs **container** → confirms UTS isolation
+* `ls /` shows isolated filesystem → confirms filesystem isolation
+* Commands execute independently from the host system
 
 ---
 
 ## 5. Design Decisions
 
-* Used `chroot()` instead of `pivot_root` for simplicity
-* Focused on namespace-based isolation
-* Implemented minimal container runtime instead of full Docker-like system
+* Used `chroot()` instead of `pivot_root` for simplicity and ease of implementation
+* Focused on core namespace-based isolation concepts
+* Designed a minimal container runtime rather than a full Docker-like system
+* Prioritized clarity and correctness over complexity
 
 ---
 
 ## 6. Limitations
 
-* No cgroups (no CPU/memory limits)
-* No networking namespace
+* No resource control (no CPU or memory limits using cgroups)
+* No networking namespace implemented
+* Not fully secure compared to production container systems
 * Limited to basic container functionality
 
 ---
 
 ## 7. Conclusion
 
-Successfully implemented a lightweight container runtime using Linux namespaces, demonstrating core concepts behind containerization.
+This project successfully demonstrates the fundamental concepts of containerization using Linux namespaces.
+
+It provides process isolation, hostname separation, and filesystem isolation, giving practical insight into how container technologies like Docker work internally.
