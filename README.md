@@ -1,36 +1,44 @@
 # OS Jackfruit – Mini Container Runtime
 
-## 📌 Description
-This project implements a lightweight container runtime using Linux namespaces in C.
+## 📌 Overview
+This project implements a lightweight container runtime in C using Linux namespaces.
 
-It demonstrates how containers work internally without using Docker.
+It demonstrates how containers achieve isolation without using Docker.
 
 ---
 
-## 🚀 Features
-- PID Isolation (CLONE_NEWPID)
-- Hostname Isolation (CLONE_NEWUTS)
-- Filesystem Isolation using chroot()
-- Mount Isolation (CLONE_NEWNS)
+## 🧠 Architecture
+
+Flow of execution:
+
+clone() → sethostname() → chroot() → mount /proc → execvp()
+
+### Components:
+- **my_engine.c** → main container runtime
+- **rootfs-alpha** → isolated filesystem
+- **Linux kernel** → provides namespaces
+
+---
+
+## ⚙️ Features
+
+- PID Isolation using `CLONE_NEWPID`
+- Hostname Isolation using `CLONE_NEWUTS`
+- Mount Isolation using `CLONE_NEWNS`
+- Filesystem Isolation using `chroot()`
 - Command execution inside container
 
 ---
 
-## ⚙️ Technologies Used
-- C Programming
-- Ubuntu 22.04
-- Linux System Calls:
-  - clone()
-  - chroot()
-  - execvp()
-  - sethostname()
+## 🔬 System Calls Used
 
----
-
-## 🧩 How It Works
-
-Flow:
-clone() → sethostname() → chroot() → mount /proc → execvp()
+| System Call | Purpose |
+|------------|--------|
+| clone() | Create isolated process |
+| chroot() | Change root filesystem |
+| sethostname() | Change container hostname |
+| execvp() | Execute command |
+| waitpid() | Wait for container exit |
 
 ---
 
